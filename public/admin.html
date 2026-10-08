@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkyPlate · Promo Admin</title>
+<style>
+:root{color-scheme:dark;--bg:#0a0b12;--panel:#141522;--line:#302747;--purple:#9b65ff;--text:#f5f1ff;--muted:#aaa3bf;--good:#76ffc2;--bad:#ff879c}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#211338 0,#0a0b12 50%);color:var(--text);font:15px system-ui,Segoe UI,sans-serif}
+main{max-width:1100px;margin:auto;padding:26px 16px 60px}.hero{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+h1{margin:0;font-size:clamp(24px,5vw,38px)}h2{font-size:18px;margin:0 0 14px}.muted{color:var(--muted)}.panel{background:#141522ee;border:1px solid var(--line);border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 12px 35px #0003}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:6px}label{font-size:13px;color:#c8bfdf}input,select{width:100%;border:1px solid #41345c;border-radius:10px;background:#0b0c15;color:white;padding:12px;font:inherit;min-width:0}
+button{border:0;border-radius:10px;padding:12px 16px;font-weight:800;cursor:pointer;color:white;background:#393049}button.primary{background:linear-gradient(100deg,#7443df,#b15aff)}button:disabled{opacity:.55;cursor:wait}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.status{margin-top:12px;white-space:pre-wrap;color:var(--muted)}.status.good{color:var(--good)}.status.bad{color:var(--bad)}
+table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid #30283e;vertical-align:top}th{color:#c8bfdf;font-size:12px;text-transform:uppercase}code{color:#d6b6ff;overflow-wrap:anywhere}.tablewrap{overflow-x:auto}.pill{display:inline-block;padding:3px 8px;border-radius:20px;background:#322448;font-size:12px}.pill.off{background:#49252d;color:#ffb1bf}.small{font-size:12px}.topline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+</style></head>
+<body><main>
+<div class="hero"><div><h1>🌌 SkyPlate · Промокоды</h1><div class="muted">Закрытая админ-панель управления промокодами</div></div><span class="pill">ADMIN</span></div>
+<div class="panel">
+<h2>🔐 Подключение администратора</h2>
+<div class="grid"><div class="field"><label for="token">ADMIN_TOKEN с хостинга</label><input id="token" type="password" autocomplete="current-password" placeholder="Вставь секретный токен"></div><div class="field"><label for="api">Адрес сервера</label><input id="api" placeholder="https://твой-сервер.onrender.com"></div></div>
+<div class="actions"><button class="primary" id="connect">Подключиться и загрузить коды</button></div><div class="status" id="connectionStatus">Токен хранится только в памяти этой вкладки и не записывается в файл.</div>
+</div>
+<div class="panel">
+<h2>🎁 Создать промокод на эксклюзивный номер</h2>
+<div class="muted small">Оставь код пустым, чтобы сервер сгенерировал случайный. Цена указывается целым числом без пробелов.</div>
+<div class="grid" style="margin-top:14px">
+<div class="field"><label for="code">Промокод (необязательно)</label><input id="code" placeholder="SKY-LEGEND-2026" maxlength="48"></div>
+<div class="field"><label for="plate">Номер</label><input id="plate" value="Х777ХХ" maxlength="10"></div>
+<div class="field"><label for="region">Регион</label><input id="region" value="777" maxlength="4"></div>
+<div class="field"><label for="rarity">Редкость</label><select id="rarity"><option>ABSOLUTE</option><option>TRANSCENDENT</option><option>MYTHIC</option><option>LEGENDARY</option><option>EPIC</option><option>RARE</option></select></div>
+<div class="field"><label for="price">Цена номера в игре</label><input id="price" type="number" min="0" value="1000000000"></div>
+<div class="field"><label for="uses">Всего активаций</label><input id="uses" type="number" min="1" max="1000000" value="1"></div>
+<div class="field"><label for="series">Серия</label><input id="series" value="SKYPLATE LEGEND"></div>
+<div class="field"><label for="edition">Издание</label><input id="edition" value="LIMITED EDITION"></div>
+<div class="field"><label for="plateType">Тип номера</label><input id="plateType" value="Эксклюзивный"></div>
+<div class="field"><label for="label">Подпись награды</label><input id="label" value="SKY LEGEND · эксклюзивный номер"></div>
+<div class="field"><label for="expires">Окончание (необязательно)</label><input id="expires" type="datetime-local"></div>
+</div>
+<div class="actions"><button class="primary" id="create">✨ Создать промокод</button><button id="refresh">Обновить список</button></div>
+<div class="status" id="createStatus"></div>
+</div>
+<div class="panel">
+<div class="topline" style="justify-content:space-between"><h2>📋 Промокоды</h2><span class="muted" id="count">0 кодов</span></div>
+<div class="tablewrap"><table><thead><tr><th>Код / награда</th><th>Использовано</th><th>Срок</th><th>Статус</th><th>Действие</th></tr></thead><tbody id="rows"><tr><td colspan="5" class="muted">Подключись к серверу, чтобы загрузить список.</td></tr></tbody></table></div>
+<div class="status" id="listStatus"></div>
+</div>
+<p class="muted small">Безопасность: никому не отправляй ADMIN_TOKEN. Для настоящих аккаунтов игроков понадобится авторизация; сейчас лимит «один раз на игрока» основан на ID браузера и не является защитой от намеренного сброса данных браузера.</p>
+</main>
+<script>
+let apiBase = "", adminToken = "";
+const $ = id => document.getElementById(id);
+function message(id, text, kind=""){const el=$(id);el.textContent=text;el.className="status "+kind}
+function base(){return apiBase.replace(/\/+$/,"")}
+async function request(path, options={}) {
+  const response = await fetch(base()+path, { ...options, headers: {
+    "Content-Type":"application/json", "Authorization":"Bearer "+adminToken, ...(options.headers||{})
+  }});
+  const data = await response.json().catch(()=>({ok:false,error:"Сервер вернул не JSON."}));
+  if(!response.ok || !data.ok) throw new Error(data.error || "HTTP "+response.status);
+  return data;
+}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+async function loadCodes(){
+  const data=await request("/api/admin/codes");
+  $("count").textContent=data.codes.length+" код(ов)";
+  const rows=$("rows");
+  if(!data.codes.length){rows.innerHTML='<tr><td colspan="5" class="muted">Пока нет промокодов. Создай первый выше.</td></tr>';return}
+  rows.innerHTML=data.codes.map(c=>`<tr>
+    <td><code>${esc(c.code)}</code><div class="small muted">${esc(c.reward.text)} · регион ${esc(c.reward.region)} · ${esc(c.reward.rarity)}</div></td>
+    <td>${c.used} / ${c.max_uses}</td><td>${c.expires_at?esc(c.expires_at):"Без срока"}</td>
+    <td><span class="pill ${c.active?"":"off"}">${c.active?"Активен":"Отключён"}</span></td>
+    <td><button data-toggle="${c.id}">${c.active?"Отключить":"Включить"}</button></td></tr>`).join("");
+  rows.querySelectorAll("[data-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{
+    btn.disabled=true;try{await request("/api/admin/codes/"+btn.dataset.toggle+"/toggle",{method:"POST",body:"{}"});await loadCodes();message("listStatus","Статус обновлён.","good")}catch(e){message("listStatus",e.message,"bad")}finally{btn.disabled=false}
+  }));
+}
+$("connect").onclick=async()=>{
+  apiBase=$("api").value.trim();adminToken=$("token").value.trim();
+  if(!/^https?:\/\//i.test(apiBase)){message("connectionStatus","Укажи полный адрес сервера, начинающийся с https://.","bad");return}
+  if(!adminToken){message("connectionStatus","Вставь ADMIN_TOKEN из настроек хостинга.","bad");return}
+  try{await loadCodes();message("connectionStatus","Подключение успешно. Не публикуй токен и не отправляй его игрокам.","good")}catch(e){message("connectionStatus","Не удалось подключиться: "+e.message,"bad")}
+};
+$("refresh").onclick=async()=>{try{await loadCodes();message("listStatus","Список обновлён.","good")}catch(e){message("listStatus",e.message,"bad")}};
+$("create").onclick=async()=>{
+  const btn=$("create");btn.disabled=true;
+  try{
+    const expires=$("expires").value ? new Date($("expires").value).toISOString() : null;
+    const data=await request("/api/admin/codes",{method:"POST",body:JSON.stringify({
+      code:$("code").value, maxUses:Number($("uses").value), expiresAt:expires,
+      reward:{text:$("plate").value,region:$("region").value,rarity:$("rarity").value,
+        price:$("price").value,series:$("series").value,edition:$("edition").value,
+        plateType:$("plateType").value,label:$("label").value}
+    })});
+    message("createStatus","Промокод создан: "+data.code+"\\nНаграда: "+data.reward.text+" · регион "+data.reward.region,"good");
+    $("code").value="";await loadCodes();
+  }catch(e){message("createStatus",e.message,"bad")}finally{btn.disabled=false}
+};
+</script></body></html>
